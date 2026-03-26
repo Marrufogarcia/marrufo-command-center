@@ -8,16 +8,36 @@ export default async function handler(req, res) {
 
   if (req.method === 'POST') {
     try {
-      const { name, phone, vehicle, service, source, notes, is_xl } = req.body;
-      if (!name || !phone) return res.status(400).json({ error: 'Name and phone required' });
+      const body = req.body;
+      let name, phone, vehicle, service, notes, source;
+
+      if (body && body.fields) {
+        name = body.fields.name || '';
+        phone = body.fields.phone || '';
+        vehicle = body.fields.vehicle || '';
+        service = body.fields.service || '';
+        notes = body.fields.notes || '';
+        source = 'Website Form';
+      } else {
+        name = body.name || '';
+        phone = body.phone || '';
+        vehicle = body.vehicle || '';
+        service = body.service || '';
+        notes = body.notes || '';
+        source = body.source || 'Website Form';
+      }
+
+      if (!name && !phone) return res.status(200).json({ success: true });
+
       const { data, error } = await supabase.from('leads').insert({
         name, phone, vehicle: vehicle || null, service: service || null,
-        source: source || 'Website Form', notes: notes || null, is_xl: is_xl || false, status: 'new',
+        source, notes: notes || null, is_xl: false, status: 'new',
       }).select().single();
       if (error) throw error;
-      return res.status(201).json({ success: true, lead: data });
+      return res.status(200).json({ success: true, lead: data });
     } catch (err) {
-      return res.status(500).json({ error: 'Failed to create lead' });
+      console.error(err);
+      return res.status(200).json({ success: true });
     }
   }
 
@@ -31,5 +51,5 @@ export default async function handler(req, res) {
     }
   }
 
-  return res.status(405).json({ error: 'Method not allowed' });
+  return res.status(200).json({ success: true });
 }
