@@ -8,23 +8,36 @@ export default async function handler(req, res) {
 
   if (req.method === 'POST') {
     try {
-      const raw = JSON.stringify(req.body || {});
-      const headers = JSON.stringify(req.headers['content-type'] || 'none');
+      const body = req.body || {};
+      let name = '', phone = '', vehicle = '', service = '', notes = '';
+
+      for (const key in body) {
+        const v = body[key];
+        if (key.includes('[name]') && key.includes('[value]')) name = v;
+        if (key.includes('[phone]') && key.includes('[value]')) phone = v;
+        if (key.includes('[vehicle]') && key.includes('[value]')) vehicle = v;
+        if (key.includes('[service]') && key.includes('[value]')) service = v;
+        if (key.includes('[note') && key.includes('[value]')) notes = v;
+        if (key.includes('[message]') && key.includes('[value]')) notes = v;
+      }
+
+      if (!name) name = body.name || 'Unknown';
+      if (!phone) phone = body.phone || 'No phone';
 
       await supabase.from('leads').insert({
-        name: 'DEBUG',
-        phone: 'Check notes',
-        vehicle: null,
-        service: null,
+        name: name,
+        phone: phone,
+        vehicle: vehicle || null,
+        service: service || null,
         source: 'Website Form',
-        notes: 'Content-Type: ' + headers + ' | Body: ' + raw.substring(0, 900),
+        notes: notes || null,
         is_xl: false,
         status: 'new',
       });
 
       return res.status(200).json({ success: true });
     } catch (err) {
-      return res.status(200).json({ success: true, error: String(err) });
+      return res.status(200).json({ success: true });
     }
   }
 
